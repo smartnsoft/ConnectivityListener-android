@@ -1,15 +1,14 @@
 package com.smartnsoft.connectivitylistener
 
-import android.arch.lifecycle.Observer
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
 import kotlinx.android.synthetic.main.activity_main.*
 
-class MainActivity : AppCompatActivity(), View.OnClickListener
+class RegistrableActivity : AppCompatActivity(), View.OnClickListener, ConnectivityChangesListener
 {
 
-  private val connectivityListener: ConnectivityListener by lazy { ConnectivityListener(this) }
+  private val registrableConnectivityListener: RegistrableConnectivityListener by lazy { RegistrableConnectivityListener(this) }
 
   override fun onCreate(savedInstanceState: Bundle?)
   {
@@ -18,26 +17,38 @@ class MainActivity : AppCompatActivity(), View.OnClickListener
 
     requestButton?.setOnClickListener(this)
 
-    connectivityListener.observe(this, Observer<ConnectivityInformation> { connectionModel ->
-      currentConnectivityState.text = when (connectionModel)
-      {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
-        ConnectivityInformation.Mobile -> "Mobile CONNECTED"
-        else                           -> "NO internet"
-      }
-    })
+    registrableConnectivityListener.register()
+    registrableConnectivityListener.setListener(this)
   }
 
-  override fun onClick(view: View?)
+  override fun onConnectivityNotification(connectivityInformation: ConnectivityInformation)
   {
-    when (view)
-    {
-      requestButton -> requestedStatus?.text = when (connectivityListener.getConnectionInformation())
+    runOnUiThread {
+      currentConnectivityState.text = when (connectivityInformation)
       {
         ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
     }
+  }
+
+  override fun onClick(view: View?)
+  {
+    when (view)
+    {
+      requestButton -> requestedStatus?.text = when (registrableConnectivityListener.getConnectionInformation())
+      {
+        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Mobile -> "Mobile CONNECTED"
+        else                           -> "NO internet"
+      }
+    }
+  }
+
+  override fun onDestroy()
+  {
+    registrableConnectivityListener.unRegister()
+    super.onDestroy()
   }
 }

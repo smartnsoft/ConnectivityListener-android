@@ -1,7 +1,6 @@
 package com.smartnsoft.connectivitylistener
 
 import android.annotation.TargetApi
-import android.arch.lifecycle.LiveData
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -24,11 +23,23 @@ enum class ConnectivityInformation(private val isConnected: Boolean)
   Disconnected(false)
 }
 
-open class ConnectivityListener(private val context: Context) : LiveData<ConnectivityInformation>()
+interface ConnectivityChangesListener
+{
+
+  fun onConnectivityNotification(connectivityInformation: ConnectivityInformation)
+}
+
+interface ConnectivityListener
+{
+  fun getConnectionInformation(): ConnectivityInformation
+}
+
+class BasicConnectivityListener(private val context: Context)
 {
 
   private val connectivityManager: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
   private var networkCallback: ConnectivityManager.NetworkCallback? = null
+  private var connectivityChangesListener: ConnectivityChangesListener? = null
 
   private val networkBroadcastReceiver = object : BroadcastReceiver()
   {
@@ -37,14 +48,19 @@ open class ConnectivityListener(private val context: Context) : LiveData<Connect
       if (intent.extras != null)
       {
         val activeNetwork = intent.extras?.get(ConnectivityManager.EXTRA_NETWORK_INFO) as NetworkInfo
-        postValue(getNetworkType(activeNetwork))
+        connectivityChangesListener?.onConnectivityNotification(getNetworkType(activeNetwork))
       }
     }
   }
 
-  override fun onActive()
+  fun setListener(connectivityChangesListener: ConnectivityChangesListener)
   {
-    super.onActive()
+    this.connectivityChangesListener = connectivityChangesListener
+    this.connectivityChangesListener?.onConnectivityNotification(getNetworkType())
+  }
+
+  fun startListening()
+  {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP)
     {
       registerBroadcastReceiverUnderLolipop()
@@ -52,12 +68,10 @@ open class ConnectivityListener(private val context: Context) : LiveData<Connect
     else
     {
       registerBroadcastListenerOnLollipopAndAbove()
-      postValue(getNetworkType(connectivityManager.activeNetworkInfo))
     }
   }
 
-  override fun onInactive()
-  {
+  fun stopListening() {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP)
     {
       unregisterBroadcastListenerLollipopAndAbove()
@@ -66,7 +80,6 @@ open class ConnectivityListener(private val context: Context) : LiveData<Connect
     {
       unregisterBroadcastReceiverUnderLolipop()
     }
-    super.onInactive()
   }
 
   fun getConnectionInformation(): ConnectivityInformation
@@ -95,22 +108,22 @@ open class ConnectivityListener(private val context: Context) : LiveData<Connect
 
       override fun onCapabilitiesChanged(network: Network?, networkCapabilities: NetworkCapabilities?)
       {
-        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
+        connectivityChangesListener?.onConnectivityNotification(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
       override fun onUnavailable()
       {
-        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
+        connectivityChangesListener?.onConnectivityNotification(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
       override fun onAvailable(network: Network?)
       {
-        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
+        connectivityChangesListener?.onConnectivityNotification(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
       override fun onLost(network: Network?)
       {
-        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
+        connectivityChangesListener?.onConnectivityNotification(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
     }
@@ -124,7 +137,7 @@ open class ConnectivityListener(private val context: Context) : LiveData<Connect
     connectivityManager.unregisterNetworkCallback(networkCallback)
   }
 
-  private fun getNetworkType(activeNetworkInfo: NetworkInfo?): ConnectivityInformation
+  private fun getNetworkType(activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo): ConnectivityInformation
   {
     return if (activeNetworkInfo == null || !activeNetworkInfo.isConnected)
     {
