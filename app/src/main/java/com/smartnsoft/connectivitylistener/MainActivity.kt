@@ -18,11 +18,12 @@ class MainActivity : AppCompatActivity(), View.OnClickListener
 
     requestButton?.setOnClickListener(this)
 
-    connectivityListener.observe(this, Observer<ConnectivityInformations> { connectionModel ->
-      currentConnectivityState.text = when (connectionModel?.isConnected)
+    connectivityListener.observe(this, Observer<ConnectivityInformation> { connectionModel ->
+      currentConnectivityState.text = when (connectionModel)
       {
-        true -> getString(R.string.status_connected)
-        else -> getString(R.string.status_disconnected)
+        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Mobile -> "Mobile CONNECTED"
+        else                           -> "NO internet"
       }
     })
   }
@@ -31,10 +32,11 @@ class MainActivity : AppCompatActivity(), View.OnClickListener
   {
     when (view)
     {
-      requestButton -> requestedStatus?.text = when (connectivityListener.isConnected())
+      requestButton -> requestedStatus?.text = when (connectivityListener.getConnectionInformation())
       {
-        true -> getString(R.string.status_connected)
-        else -> getString(R.string.status_disconnected)
+        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Mobile -> "Mobile CONNECTED"
+        else                           -> "NO internet"
       }
     }
   }

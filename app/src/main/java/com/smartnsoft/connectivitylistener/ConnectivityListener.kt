@@ -15,7 +15,16 @@ import android.os.Build
  * @since 2019.05.28
  */
 
-class ConnectivityListener(private val context: Context) : LiveData<ConnectivityInformations>()
+enum class ConnectivityInformation(private val isConnected: Boolean)
+{
+
+  Wifi(true),
+  Mobile(true),
+  Other(true),
+  Disconnected(false)
+}
+
+open class ConnectivityListener(private val context: Context) : LiveData<ConnectivityInformation>()
 {
 
   private val connectivityManager: ConnectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -28,9 +37,7 @@ class ConnectivityListener(private val context: Context) : LiveData<Connectivity
       if (intent.extras != null)
       {
         val activeNetwork = intent.extras?.get(ConnectivityManager.EXTRA_NETWORK_INFO) as NetworkInfo
-
-        val isConnected = activeNetwork.isConnectedOrConnecting
-        postValue(ConnectivityInformations(isConnected))
+        postValue(getNetworkType(activeNetwork))
       }
     }
   }
@@ -45,6 +52,7 @@ class ConnectivityListener(private val context: Context) : LiveData<Connectivity
     else
     {
       registerBroadcastListenerOnLollipopAndAbove()
+      postValue(getNetworkType(connectivityManager.activeNetworkInfo))
     }
   }
 
@@ -61,14 +69,9 @@ class ConnectivityListener(private val context: Context) : LiveData<Connectivity
     super.onInactive()
   }
 
-  fun isConnected(): Boolean
+  fun getConnectionInformation(): ConnectivityInformation
   {
-    connectivityManager.also { manager ->
-      manager.activeNetworkInfo?.also { networkInfo ->
-        return networkInfo.isConnected
-      }
-    }
-    return false
+    return getNetworkType(connectivityManager.activeNetworkInfo)
   }
 
   private fun registerBroadcastReceiverUnderLolipop()
@@ -92,25 +95,26 @@ class ConnectivityListener(private val context: Context) : LiveData<Connectivity
 
       override fun onCapabilitiesChanged(network: Network?, networkCapabilities: NetworkCapabilities?)
       {
-        postValue(ConnectivityInformations(true))
+        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
       override fun onUnavailable()
       {
-        postValue(ConnectivityInformations(true))
+        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
       override fun onAvailable(network: Network?)
       {
-        postValue(ConnectivityInformations(true))
+        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
       override fun onLost(network: Network?)
       {
-        postValue(ConnectivityInformations(false))
+        postValue(getNetworkType(connectivityManager.activeNetworkInfo))
       }
 
     }
+
     connectivityManager.registerNetworkCallback(builder.build(), networkCallback)
   }
 
@@ -118,5 +122,23 @@ class ConnectivityListener(private val context: Context) : LiveData<Connectivity
   private fun unregisterBroadcastListenerLollipopAndAbove()
   {
     connectivityManager.unregisterNetworkCallback(networkCallback)
+  }
+
+  private fun getNetworkType(activeNetworkInfo: NetworkInfo?): ConnectivityInformation
+  {
+    return if (activeNetworkInfo == null || !activeNetworkInfo.isConnected)
+    {
+      ConnectivityInformation.Disconnected
+    }
+    else
+    {
+      when (activeNetworkInfo.type)
+      {
+        ConnectivityManager.TYPE_WIFI   -> ConnectivityInformation.Wifi
+        ConnectivityManager.TYPE_MOBILE -> ConnectivityInformation.Mobile
+        else                            -> ConnectivityInformation.Other
+      }
+    }
+
   }
 }
