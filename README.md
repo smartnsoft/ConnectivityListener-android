@@ -23,7 +23,7 @@ ConnectivityListener(context).isConnected()
 
 ``` 
 ConnectivityListener(context).observe(this, Observer<ConnectivityInformations> { connectionModel ->
-      currentConnectivityState.text = when (connectionModel?.isConnected)
+      when (connectionModel?.isConnected)
       {
         true -> // Do something when network is available
         else -> // Do something when network is no longer available :(
