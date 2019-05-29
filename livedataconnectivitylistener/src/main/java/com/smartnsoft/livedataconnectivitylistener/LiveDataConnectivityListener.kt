@@ -1,7 +1,10 @@
-package com.smartnsoft.connectivitylistener
+package com.smartnsoft.livedataconnectivitylistener
 
 import android.arch.lifecycle.LiveData
 import android.content.Context
+import com.smartnsoft.connectivitylistener.library.ConnectivityInformation
+import com.smartnsoft.connectivitylistener.library.ConnectivityListener
+import com.smartnsoft.connectivitylistener.library.OnConnectivityInformationChangedListener
 
 
 /**

@@ -1,16 +1,15 @@
-package com.smartnsoft.sample
+package com.smartnsoft.connectivitylistener.sample
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import com.smartnsoft.connectivitylistener.ConnectivityInformation
-import com.smartnsoft.connectivitylistener.ConnectivityListener
-import com.smartnsoft.connectivitylistener.OnConnectivityInformationChangedListener
-import com.smartnsoft.connectivitylistener.R
+import com.smartnsoft.connectivitylistener.library.ConnectivityInformation
+import com.smartnsoft.connectivitylistener.library.ConnectivityListener
+import com.smartnsoft.connectivitylistener.library.OnConnectivityInformationChangedListener
 import kotlinx.android.synthetic.main.activity_main.*
 
 class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
-    OnConnectivityInformationChangedListener
+  OnConnectivityInformationChangedListener
 {
 
   private val registrableConnectivityListener: ConnectivityListener by lazy {

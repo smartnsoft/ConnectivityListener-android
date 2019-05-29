@@ -1,17 +1,15 @@
-package com.smartnsoft.sample
+package com.smartnsoft.connectivitylistener.sample
 
 import android.arch.lifecycle.Observer
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import com.smartnsoft.connectivitylistener.ConnectivityInformation
-import com.smartnsoft.connectivitylistener.LiveDataConnectivityListener
-import com.smartnsoft.connectivitylistener.R
+import com.smartnsoft.connectivitylistener.library.ConnectivityInformation
+import com.smartnsoft.livedataconnectivitylistener.LiveDataConnectivityListener
 import kotlinx.android.synthetic.main.activity_main.*
 
 class LiveDataActivity : AppCompatActivity(), View.OnClickListener
 {
-
 
   private val liveDataConnectivityListener: LiveDataConnectivityListener by lazy {
     LiveDataConnectivityListener(
