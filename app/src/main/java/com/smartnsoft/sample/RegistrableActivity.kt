@@ -3,19 +3,19 @@ package com.smartnsoft.sample
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
-import com.smartnsoft.connectivitylistener.OnConnectivityInformationChangedListener
 import com.smartnsoft.connectivitylistener.ConnectivityInformation
 import com.smartnsoft.connectivitylistener.ConnectivityListener
+import com.smartnsoft.connectivitylistener.OnConnectivityInformationChangedListener
 import com.smartnsoft.connectivitylistener.R
 import kotlinx.android.synthetic.main.activity_main.*
 
 class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
-  OnConnectivityInformationChangedListener
+    OnConnectivityInformationChangedListener
 {
 
   private val registrableConnectivityListener: ConnectivityListener by lazy {
     ConnectivityListener(
-      this
+        this
     )
   }
 
@@ -35,7 +35,7 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
     runOnUiThread {
       currentConnectivityState.text = when (connectivityInformation)
       {
-        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
@@ -48,7 +48,7 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
     {
       requestButton -> requestedStatus?.text = when (registrableConnectivityListener.getConnectionInformation())
       {
-        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }

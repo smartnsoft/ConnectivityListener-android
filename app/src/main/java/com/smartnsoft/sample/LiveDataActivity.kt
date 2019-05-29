@@ -15,7 +15,7 @@ class LiveDataActivity : AppCompatActivity(), View.OnClickListener
 
   private val liveDataConnectivityListener: LiveDataConnectivityListener by lazy {
     LiveDataConnectivityListener(
-      this
+        this
     )
   }
 
@@ -29,7 +29,7 @@ class LiveDataActivity : AppCompatActivity(), View.OnClickListener
     liveDataConnectivityListener.observe(this, Observer<ConnectivityInformation> { connectionModel ->
       currentConnectivityState.text = when (connectionModel)
       {
-        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
@@ -42,7 +42,7 @@ class LiveDataActivity : AppCompatActivity(), View.OnClickListener
     {
       requestButton -> requestedStatus?.text = when (liveDataConnectivityListener.getConnectionInformation())
       {
-        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
