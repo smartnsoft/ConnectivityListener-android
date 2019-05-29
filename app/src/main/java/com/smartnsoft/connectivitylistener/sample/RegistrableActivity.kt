@@ -34,7 +34,7 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
     runOnUiThread {
       currentConnectivityState.text = when (connectivityInformation)
       {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi  -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }

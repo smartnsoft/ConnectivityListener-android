@@ -2,6 +2,10 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
 
+apply plugin: "com.jfrog.bintray"
+apply plugin: "maven"
+apply plugin: "maven-publish"
+
 android {
     compileSdkVersion 28
 
@@ -10,7 +14,7 @@ android {
         minSdkVersion 16
         targetSdkVersion 28
         versionCode 1
-        versionName "1.0"
+        versionName "1.0-SNAPSHOT"
     }
 
     buildTypes {
@@ -29,4 +33,138 @@ dependencies {
 }
 repositories {
     mavenCentral()
+}
+
+task sourcesJar(type: Jar) {
+    classifier = "sources"
+    from android.sourceSets.main.java.srcDirs
+}
+
+task javadoc(type: Javadoc) {
+    title = "Connectivity Listener API"
+    description "Javadoc for the ConnectivityListener library"
+    source = android.sourceSets.main.java.srcDirs
+
+    options.charSet = "UTF-8"
+    options.overview = "src/main/javadoc/overview.html"
+    options.links = ["http://docs.oracle.com/javase/7/docs/api/", "http://d.android.com/reference/"]
+
+    classpath += project.files(project.android.getBootClasspath().join(File.pathSeparator))
+    failOnError = false
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    classifier = "javadoc"
+    from javadoc.destinationDir
+    // options.encoding = 'UTF-8'
+}
+
+artifacts
+{
+    archives javadocJar
+    archives sourcesJar
+}
+
+def pomConfig = {
+    licenses
+    {
+        license
+        {
+            name "MIT License (MIT)"
+            url "https://opensource.org/licenses/MIT"
+            distribution "repo"
+        }
+    }
+}
+
+publishing
+{
+    publications
+    {
+        ReleasePublication(MavenPublication)
+        {
+            artifact sourcesJar
+            artifact javadocJar
+            groupId "com.smartnsoft"
+            artifactId "connectivitylistener"
+            version android.defaultConfig.versionName
+
+            pom.withXml
+            {
+                def root = asNode()
+                root.appendNode("description", "ConnectivityListener is an Android library to listen for Network changes.")
+                root.appendNode("name", "connectivitylistener")
+                root.appendNode("url", "https://github.com/smartnsoft/connectivity-listener")
+                root.children().last() + pomConfig
+            }
+        }
+    }
+}
+
+//https://gist.github.com/bugs84/b7887fb5d7f9f2d484b8
+publishing.publications.all
+{
+    pom.withXml
+    {
+        asNode().dependencies."*".findAll()
+        {
+            it.scope.text() == "runtime" && project.configurations.compile.allDependencies.find { dep ->
+                dep.name == it.artifactId.text()
+            }
+        }.each
+            {
+                it.scope*.value = "compile"
+            }
+    }
+}
+
+bintray
+{
+    publications = ["ReleasePublication"]
+
+    pkg
+    {
+        repo = "maven"
+        name = "connectivitylistener"
+        userOrg = "smartnsoft"
+        licenses = ["MIT"]
+        vcsUrl = ""
+        publish = true
+
+        version
+        {
+            name = android.defaultConfig.versionName
+            desc = "ConnectivityListener is an Android library to listen for Network changes."
+            released = new Date()
+            vcsTag = "v" + android.defaultConfig.versionName
+        }
+    }
+}
+
+uploadArchives
+{
+    repositories
+    {
+        mavenDeployer
+        {
+            repository(url: "https://api.bintray.com/maven/smartnsoft/maven/connectivitylistener/;publish=1")
+            {
+                authentication(userName: bintrayUsername, password: bintrayKey)
+            }
+
+            snapshotRepository(url: nexusSnapshotUrl)
+            {
+                authentication(userName: nexusUsername, password: nexusPassword)
+            }
+
+            pom.project
+            {
+                name "connectivitylistener"
+                groupId "com.smartnsoft"
+                artifactId "connectivitylistener"
+                version android.defaultConfig.versionName
+                packaging "aar"
+            }
+        }
+    }
 }

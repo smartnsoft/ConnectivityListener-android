@@ -16,6 +16,11 @@ open class LiveDataConnectivityListener(context: Context) : LiveData<Connectivit
 
   private val connectivityListener = ConnectivityListener(context)
 
+  /**
+   * Method used to request the current [ConnectivityInformation]
+   *
+   * @return[ConnectivityInformation] - the current [ConnectivityInformation]
+   */
   fun getConnectionInformation(): ConnectivityInformation
   {
     return connectivityListener.getConnectionInformation()
