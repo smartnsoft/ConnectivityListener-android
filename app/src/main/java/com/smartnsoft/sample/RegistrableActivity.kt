@@ -1,14 +1,23 @@
-package com.smartnsoft.connectivitylistener
+package com.smartnsoft.sample
 
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import com.smartnsoft.connectivitylistener.OnConnectivityInformationChangedListener
+import com.smartnsoft.connectivitylistener.ConnectivityInformation
+import com.smartnsoft.connectivitylistener.ConnectivityListener
+import com.smartnsoft.connectivitylistener.R
 import kotlinx.android.synthetic.main.activity_main.*
 
-class RegistrableActivity : AppCompatActivity(), View.OnClickListener, ConnectivityChangesListener
+class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
+  OnConnectivityInformationChangedListener
 {
 
-  private val registrableConnectivityListener: RegistrableConnectivityListener by lazy { RegistrableConnectivityListener(this) }
+  private val registrableConnectivityListener: ConnectivityListener by lazy {
+    ConnectivityListener(
+      this
+    )
+  }
 
   override fun onCreate(savedInstanceState: Bundle?)
   {
@@ -21,12 +30,12 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener, Connectiv
     registrableConnectivityListener.setListener(this)
   }
 
-  override fun onConnectivityNotification(connectivityInformation: ConnectivityInformation)
+  override fun onConnectivityInformationChanged(connectivityInformation: ConnectivityInformation)
   {
     runOnUiThread {
       currentConnectivityState.text = when (connectivityInformation)
       {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
@@ -39,7 +48,7 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener, Connectiv
     {
       requestButton -> requestedStatus?.text = when (registrableConnectivityListener.getConnectionInformation())
       {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
@@ -48,7 +57,7 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener, Connectiv
 
   override fun onDestroy()
   {
-    registrableConnectivityListener.unRegister()
+    registrableConnectivityListener.unregister()
     super.onDestroy()
   }
 }

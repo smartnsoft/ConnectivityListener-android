@@ -10,10 +10,10 @@
             android:roundIcon="@mipmap/ic_launcher_round"
             android:supportsRtl="true"
             android:theme="@style/AppTheme">
-        <activity android:name=".LiveDataActivity">
+        <activity android:name="com.smartnsoft.sample.LiveDataActivity">
 
         </activity>
-        <activity android:name=".RegistrableActivity">
+        <activity android:name="com.smartnsoft.sample.RegistrableActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
 

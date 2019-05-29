@@ -8,31 +8,26 @@ import android.content.Context
  * @author Thomas Ecalle
  * @since 2019.05.28
  */
-open class LiveDataConnectivityListener(context: Context) : LiveData<ConnectivityInformation>(), ConnectivityChangesListener, ConnectivityListener
-{
+open class LiveDataConnectivityListener(context: Context) : LiveData<ConnectivityInformation>() {
 
-  private val connectivityListener = BasicConnectivityListener(context)
+    private val connectivityListener = ConnectivityListener(context)
 
-  override fun onConnectivityNotification(connectivityInformation: ConnectivityInformation)
-  {
-    postValue(connectivityInformation)
-  }
+    fun getConnectionInformation(): ConnectivityInformation {
+        return connectivityListener.getConnectionInformation()
+    }
 
-  override fun getConnectionInformation(): ConnectivityInformation
-  {
-    return connectivityListener.getConnectionInformation()
-  }
+    override fun onActive() {
+        super.onActive()
+        connectivityListener.register()
+        connectivityListener.setListener(object : OnConnectivityInformationChangedListener {
+            override fun onConnectivityInformationChanged(connectivityInformation: ConnectivityInformation) {
+                postValue(connectivityInformation)
+            }
+        })
+    }
 
-  override fun onActive()
-  {
-    super.onActive()
-    connectivityListener.startListening()
-    connectivityListener.setListener(this)
-  }
-
-  override fun onInactive()
-  {
-    connectivityListener.stopListening()
-    super.onInactive()
-  }
+    override fun onInactive() {
+        connectivityListener.unregister()
+        super.onInactive()
+    }
 }

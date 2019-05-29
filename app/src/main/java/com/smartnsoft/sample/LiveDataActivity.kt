@@ -1,16 +1,23 @@
-package com.smartnsoft.connectivitylistener
+package com.smartnsoft.sample
 
 import android.arch.lifecycle.Observer
 import android.os.Bundle
 import android.support.v7.app.AppCompatActivity
 import android.view.View
+import com.smartnsoft.connectivitylistener.ConnectivityInformation
+import com.smartnsoft.connectivitylistener.LiveDataConnectivityListener
+import com.smartnsoft.connectivitylistener.R
 import kotlinx.android.synthetic.main.activity_main.*
 
 class LiveDataActivity : AppCompatActivity(), View.OnClickListener
 {
 
 
-  private val liveDataConnectivityListener: LiveDataConnectivityListener by lazy { LiveDataConnectivityListener(this) }
+  private val liveDataConnectivityListener: LiveDataConnectivityListener by lazy {
+    LiveDataConnectivityListener(
+      this
+    )
+  }
 
   override fun onCreate(savedInstanceState: Bundle?)
   {
@@ -22,7 +29,7 @@ class LiveDataActivity : AppCompatActivity(), View.OnClickListener
     liveDataConnectivityListener.observe(this, Observer<ConnectivityInformation> { connectionModel ->
       currentConnectivityState.text = when (connectionModel)
       {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
@@ -35,7 +42,7 @@ class LiveDataActivity : AppCompatActivity(), View.OnClickListener
     {
       requestButton -> requestedStatus?.text = when (liveDataConnectivityListener.getConnectionInformation())
       {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
+        ConnectivityInformation.Wifi -> "WIFI CONNECTED"
         ConnectivityInformation.Mobile -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
