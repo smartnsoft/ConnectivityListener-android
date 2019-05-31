@@ -28,7 +28,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
     implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.smartnsoft:connectivitylistener:1.0-001-SNAPSHOT'
+    implementation 'com.smartnsoft:connectivitylistener:1.0.0-001-SNAPSHOT'
 }
 
 task sourcesJar(type: Jar) {
