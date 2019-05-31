@@ -11,61 +11,105 @@ ConnectivityListener enable you to :
 
 ## How does it work ?
 
-We wanted to make ConnectivityListener as simple as possible to use, so we wrapped it into a LiveData to prevent you from managing any LifeCycle.
+We wanted to make ConnectivityListener as simple as possible to use, so we created 2 libraries in order to make you use the more suitable for your use case.
 
-1. In order to get the current connectivity's state :
+### The basic `ConnectivityListener`
 
-``` 
-ConnectivityListener(context).isConnected()
-```
+This is the most basic implementation. It let the user responsible to `register` and `unregister` the listener
 
-2. In order to listen for connectivity changes :
-
-``` 
-ConnectivityListener(context).observe(this, Observer<ConnectivityInformations> { connectionModel ->
-      when (connectionModel?.isConnected)
-      {
-        true -> // Do something when network is available
-        else -> // Do something when network is no longer available :(
-      }
-    })
-```
-
-## Complete example in simple activity :
+Steps are : 
 
 ```
-class MainActivity : AppCompatActivity(), View.OnClickListener
-{
+implementation("com.smartnsoft:connectivitylistener:1.0-SNAPSHOT")
+```
 
-  private val connectivityListener: ConnectivityListener by lazy { ConnectivityListener(this) }
+1.Register the Listener in an `active` LifeCycle :
 
-  override fun onCreate(savedInstanceState: Bundle?)
+```
+connectivityListener = ConnectivityListener(this)
+connectivityListener.register()
+```
+
+2.Set the listener :
+
+```
+connectivityListener.setListener(this)
+```
+
+3.Do something with the informations about connectivity :
+
+```
+override fun onConnectivityInformationChanged(connectivityInformation: ConnectivityInformation)
   {
-    super.onCreate(savedInstanceState)
-    setContentView(R.layout.activity_main)
-
-    requestButton?.setOnClickListener(this)
-
-    connectivityListener.observe(this, Observer<ConnectivityInformations> { connectionModel ->
-      currentConnectivityState.text = when (connectionModel?.isConnected)
+    runOnUiThread {
+      when (connectivityInformation)
       {
-        true -> getString(R.string.status_connected)
-        else -> getString(R.string.status_disconnected)
-      }
-    })
-  }
-
-  override fun onClick(view: View?)
-  {
-    when (view)
-    {
-      requestButton -> requestedStatus?.text = when (connectivityListener.isConnected())
-      {
-        true -> getString(R.string.status_connected)
-        else -> getString(R.string.status_disconnected)
+        ConnectivityInformation.Wifi  -> // WIFI CONNECTED
+        ConnectivityInformation.Mobile -> // Mobile CONNECTED
+        else                           -> // Mobile CONNECTED
       }
     }
   }
+
+```
+
+4.Unregister the listener when your app goes in an `inactive` Lifecycle :
+
+```
+connectivityListener.unregister();
+```
+    
+
+In parallel, you can request the current connectivity information at any time :
+
+```
+when (connectivityListener.getConnectionInformation())
+{
+ConnectivityInformation.Wifi   -> // WIFI CONNECTED
+ConnectivityInformation.Mobile -> // Mobile CONNECTED
+else                           -> // Mobile CONNECTED
 }
 ```
+
+
+### The `LiveData ConnectivityListener` :
+
+This library use the power of LiveData and the fact that they are LifeCycle aware in order to prevent the user from having to register and unregister the listener.
+
+Steps are :
+
+```
+implementation("com.smartnsoft:livedataconnectivitylistener:1.0-SNAPSHOT")
+```
+
+1.Observe LiveData changes :
+
+```
+LiveDataConnectivityListener(this).observe(this, Observer<ConnectivityInformation> { connectionModel ->
+    when (connectionModel)
+    {
+      ConnectivityInformation.Wifi   -> // WIFI CONNECTED
+      ConnectivityInformation.Mobile -> // Mobile CONNECTED
+      else                           -> // NO internet
+    }
+  })
+```
+
+In parallel, you can request the current connectivity information at any time :
+
+```
+when (connectivityListener.getConnectionInformation())
+{
+ConnectivityInformation.Wifi   -> // WIFI CONNECTED
+ConnectivityInformation.Mobile -> // Mobile CONNECTED
+else                           -> // Mobile CONNECTED
+}
+```
+
+
+## Complete examples in simple activities :
+
+Please refer to `app` module to see 2 implementations of the library corresponding to Basic and LiveData libraries.
+
+
 
