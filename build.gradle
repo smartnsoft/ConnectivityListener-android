@@ -5,7 +5,18 @@ buildscript {
     repositories {
         google()
         jcenter()
-        
+
+        maven
+        {
+            credentials
+            {
+                username nexusUsername
+                password nexusPassword
+            }
+
+            url nexusRepositoryUrl
+        }
+
     }
     dependencies {
         classpath 'com.android.tools.build:gradle:3.4.1'
@@ -20,6 +31,16 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven
+        {
+            credentials
+            {
+                username nexusUsername
+                password nexusPassword
+            }
+
+            url nexusRepositoryUrl
+        }
         
     }
 }
