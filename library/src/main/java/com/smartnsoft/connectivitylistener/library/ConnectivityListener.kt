@@ -56,7 +56,39 @@ interface OnConnectivityInformationChangedListener {
  *
  * @param [context] - A Valid context (your Zctivity or Fragment, for example)
  */
+@Suppress("MemberVisibilityCanBePrivate", "unused")
 open class ConnectivityListener(private val context: Context) {
+
+    val isBackgroundDownloadAllowedByUser: Boolean
+        get() {
+            return when (currentDataSaverMode) {
+                // Background data usage is blocked for this app. Wherever possible,
+                // the app should also use less data in the foreground.
+                ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED -> return false
+                // The app is whitelisted. Wherever possible,
+                // the app should use less data in the foreground and background.
+                ConnectivityManager.RESTRICT_BACKGROUND_STATUS_WHITELISTED,
+                    // Data Saver is disabled. Since the device is connected to an
+                    // unmetered network, the app should use less data wherever possible.
+                ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED -> return true
+                else -> true
+            }
+        }
+
+    val currentDataSaverMode: Int
+        get() {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                val connMgr = this.connectivityManager
+                // Checks if the device is on a metered network
+                if (connMgr.isActiveNetworkMetered) {
+                    // Checks user’s Data Saver settings.
+                    return connMgr.restrictBackgroundStatus
+                }
+            }
+            // The device is not running Android N or not on a metered network.
+            // Use data as required to perform syncs, downloads, and updates.
+            return 1
+        }
 
     protected val connectivityManager: ConnectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
@@ -118,12 +150,26 @@ open class ConnectivityListener(private val context: Context) {
      *
      * @return[ConnectivityInformation] - The current [ConnectivityInformation]
      */
-    fun getConnectionInformation(): ConnectivityInformation =
-        getNetworkType(connectivityManager.activeNetworkInfo).run {
-            onConnectivityInformationChangedListener?.onConnectivityInformationChanged(this)
-            this
+    fun getConnectionInformation(): ConnectivityInformation {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            var capabilities: NetworkCapabilities? = null
+            connectivityManager.allNetworks?.forEach { network ->
+                val networkCapabilities = connectivityManager.getNetworkCapabilities(network)
+                if (capabilities == null && networkCapabilities.isConnected()) {
+                    capabilities = networkCapabilities
+                }
+            }
+            getNetworkType(connectivityManager.activeNetworkInfo, capabilities).run {
+                onConnectivityInformationChangedListener?.onConnectivityInformationChanged(this)
+                this
+            }
+        } else {
+            getNetworkType(connectivityManager.activeNetworkInfo).run {
+                onConnectivityInformationChangedListener?.onConnectivityInformationChanged(this)
+                this
+            }
         }
-
+    }
 
     private fun registerBroadcastReceiverUnderLolipop() {
         val filter = IntentFilter(ConnectivityManager.CONNECTIVITY_ACTION)
@@ -143,31 +189,39 @@ open class ConnectivityListener(private val context: Context) {
             override fun onCapabilitiesChanged(network: Network?, networkCapabilities: NetworkCapabilities?) {
                 onConnectivityInformationChangedListener?.onConnectivityInformationChanged(
                     getNetworkType(
-                        connectivityManager.activeNetworkInfo
+                        connectivityManager.activeNetworkInfo,
+                        networkCapabilities
                     )
                 )
             }
 
             override fun onUnavailable() {
-                onConnectivityInformationChangedListener?.onConnectivityInformationChanged(
-                    getNetworkType(
-                        connectivityManager.activeNetworkInfo
-                    )
-                )
+//                onConnectivityInformationChangedListener?.onConnectivityInformationChanged(
+//                    getNetworkType(
+//                        connectivityManager.activeNetworkInfo
+//                    )
+//                )
             }
 
             override fun onAvailable(network: Network?) {
                 onConnectivityInformationChangedListener?.onConnectivityInformationChanged(
                     getNetworkType(
-                        connectivityManager.activeNetworkInfo
+                        connectivityManager.activeNetworkInfo,
+                        network?.let { network ->
+                            return@let connectivityManager.getNetworkCapabilities(network)
+                        }
                     )
                 )
             }
 
             override fun onLost(network: Network?) {
+                connectivityManager.getNetworkCapabilities(network)
                 onConnectivityInformationChangedListener?.onConnectivityInformationChanged(
                     getNetworkType(
-                        connectivityManager.activeNetworkInfo
+                        connectivityManager.activeNetworkInfo,
+                        network?.let { network ->
+                            return@let connectivityManager.getNetworkCapabilities(network)
+                        }
                     )
                 )
             }
@@ -182,11 +236,39 @@ open class ConnectivityListener(private val context: Context) {
         connectivityManager.unregisterNetworkCallback(networkCallback)
     }
 
-    private fun getNetworkType(activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo): ConnectivityInformation {
+    private fun getNetworkType(
+        activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
+    ): ConnectivityInformation {
         return if (activeNetworkInfo == null || !activeNetworkInfo.isConnected) {
             ConnectivityInformation.Disconnected
         } else {
             when (activeNetworkInfo.type) {
+                ConnectivityManager.TYPE_WIFI -> ConnectivityInformation.Wifi
+                ConnectivityManager.TYPE_MOBILE -> ConnectivityInformation.Mobile
+                else -> ConnectivityInformation.Other
+            }
+        }
+
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    fun NetworkCapabilities.isConnected(): Boolean {
+        return hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.M || hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED))
+                && (Build.VERSION.SDK_INT < Build.VERSION_CODES.P || hasCapability(NetworkCapabilities.NET_CAPABILITY_FOREGROUND))
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun getNetworkType(
+        activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
+        , networkCapabilities: NetworkCapabilities?
+    ): ConnectivityInformation {
+        val isConnected = networkCapabilities?.isConnected() ?: false
+
+        return if (isConnected.not()) {
+            ConnectivityInformation.Disconnected
+        } else {
+            when (activeNetworkInfo?.type) {
                 ConnectivityManager.TYPE_WIFI -> ConnectivityInformation.Wifi
                 ConnectivityManager.TYPE_MOBILE -> ConnectivityInformation.Mobile
                 else -> ConnectivityInformation.Other
