@@ -58,7 +58,7 @@ interface OnConnectivityInformationChangedListener {
  */
 open class ConnectivityListener(private val context: Context) {
 
-    private val connectivityManager: ConnectivityManager =
+    protected val connectivityManager: ConnectivityManager =
         context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
     private var networkCallback: ConnectivityManager.NetworkCallback? = null
     private var onConnectivityInformationChangedListener: OnConnectivityInformationChangedListener? = null
