@@ -49,13 +49,15 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
 
     private fun setConnectivityText(textView: TextView?, connectivityInformation: ConnectivityInformation) {
         val connectionStatus: CharSequence = when (connectivityInformation) {
-            ConnectivityInformation.Wifi -> "WIFI CONNECTED"
-            ConnectivityInformation.Mobile -> "Mobile CONNECTED"
+            ConnectivityInformation.WIFI -> "WIFI CONNECTED"
+            ConnectivityInformation.MOBILE -> "Mobile CONNECTED"
             else -> "NO internet"
+        }.run {
+            "$this : ${if (connectivityInformation.isConnected.not()) "not" else ""} connected}"
         }
 
         val dataSaverStatus =
-            "Background network calls are ${if (registrableConnectivityListener.isBackgroundDownloadAllowedByUser) "ALLOWED" else "DENIED"}"
+            "Background network calls are ${if (registrableConnectivityListener.restrictBackgroundStatus.isRestricted) "ALLOWED" else "DENIED"}"
 
         textView?.text = "$connectionStatus\n$dataSaverStatus"
     }

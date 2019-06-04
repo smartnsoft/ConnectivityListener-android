@@ -18,20 +18,42 @@ import com.smartnsoft.connectivitylistener.library.ConnectivityInformation.*
 /**
  * An enum that defines the type of network the device is connected to and if it represents a "connected" state
  *
+ * [WIFI] - A Wifi network
  *
- * [Wifi] - A Wifi network
+ * [MOBILE] - A Mobile network
  *
- * [Mobile] - A Mobile network
+ * [OTHER] - Other kind of networks (eg. Tethering)
  *
- * [Other] - Other kind of networks
- *
- * @param [isConnected] Does the network have an internet connection or not
+ * @param [isConnected] is true if the network has an internet connection
  */
-enum class ConnectivityInformation(private val isConnected: Boolean) {
-    Wifi(true),
-    Mobile(true),
-    Other(true),
-    Disconnected(false)
+enum class ConnectivityInformation(val isConnected: Boolean) {
+    WIFI(true),
+    MOBILE(true),
+    OTHER(true),
+    DISCONNECTED(false)
+}
+
+/**
+ * An enum that defines the type of network the device is connected to and if it represents a "connected" state
+ *
+ * [ENABLED] - Background data usage is blocked for this app. Wherever possible,
+ * the app should also use less data in the foreground.
+ *
+ * [WHITELISTED] - The app is whitelisted. Wherever possible,
+ * the app should use less data in the foreground and background.
+ *
+ * [DISABLED] - Data Saver is disabled. Since the device is connected to an unmetered network,
+ * the app should use less data wherever possible.
+ *
+ * [OTHER] - Another state, should not happen
+ *
+ * @param [isRestricted] is true if background data usage is blocked for this app
+ */
+enum class RestrictBackgroundStatus(val isRestricted: Boolean) {
+    ENABLED(true),
+    WHITELISTED(false),
+    DISABLED(false),
+    OTHER(false)
 }
 
 /**
@@ -48,46 +70,44 @@ interface OnConnectivityInformationChangedListener {
 }
 
 /**
- * The class that is reponsible for listening to network's changes
+ * The class that is responsible for listening to network's changes
  *
- * After instanciating it with a context, the developer can register to its changes and listent for networks changes.
+ * After instantiating it with a context, the developer can register to its changes and listen for networks changes.
  *
- * We also can request the network [ConnectivityInformation] a any time
+ * We also can request the network [ConnectivityInformation] at any time
  *
- * @param [context] - A Valid context (your Zctivity or Fragment, for example)
+ * @param [context] - A Valid context (your Activity or Fragment, for example)
  */
-@Suppress("MemberVisibilityCanBePrivate", "unused")
 open class ConnectivityListener(private val context: Context) {
 
-    val isBackgroundDownloadAllowedByUser: Boolean
-        get() {
-            return when (currentDataSaverMode) {
-                // Background data usage is blocked for this app. Wherever possible,
-                // the app should also use less data in the foreground.
-                ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED -> return false
-                // The app is whitelisted. Wherever possible,
-                // the app should use less data in the foreground and background.
-                ConnectivityManager.RESTRICT_BACKGROUND_STATUS_WHITELISTED,
-                    // Data Saver is disabled. Since the device is connected to an
-                    // unmetered network, the app should use less data wherever possible.
-                ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED -> return true
-                else -> true
-            }
-        }
+    companion object {
+        private const val RESTRICT_BACKGROUND_STATUS_DISABLED =
+            1 // ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED
+    }
 
-    val currentDataSaverMode: Int
+    //TODO Create a listener
+    val restrictBackgroundStatus: RestrictBackgroundStatus
         get() {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-                val connMgr = this.connectivityManager
-                // Checks if the device is on a metered network
-                if (connMgr.isActiveNetworkMetered) {
-                    // Checks user’s Data Saver settings.
-                    return connMgr.restrictBackgroundStatus
+            // By default, the device is not running Android N or not on a metered network.
+            // Use data as required to perform syncs, downloads, and updates.
+            return RESTRICT_BACKGROUND_STATUS_DISABLED.run {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    this@ConnectivityListener.connectivityManager.apply {
+                        // Checks if the device is on a metered network
+                        if (this.isActiveNetworkMetered) {
+                            return@run this.restrictBackgroundStatus
+                        }
+                    }
+                }
+                this
+            }.run {
+                when (this) {
+                    ConnectivityManager.RESTRICT_BACKGROUND_STATUS_ENABLED -> RestrictBackgroundStatus.ENABLED
+                    ConnectivityManager.RESTRICT_BACKGROUND_STATUS_WHITELISTED -> RestrictBackgroundStatus.WHITELISTED
+                    ConnectivityManager.RESTRICT_BACKGROUND_STATUS_DISABLED -> RestrictBackgroundStatus.DISABLED
+                    else -> RestrictBackgroundStatus.OTHER
                 }
             }
-            // The device is not running Android N or not on a metered network.
-            // Use data as required to perform syncs, downloads, and updates.
-            return 1
         }
 
     protected val connectivityManager: ConnectivityManager =
@@ -121,13 +141,13 @@ open class ConnectivityListener(private val context: Context) {
      *
      * Pay attention to call this method in an "Active" LifeCycle state like in onCreate of an activity
      *
-     * Note that you have to specifically set the [OnConnectivityInformationChangedListener] with the method [setListener] in order tp have callbacks on network changes
+     * Note that you have to specifically set the [OnConnectivityInformationChangedListener] with the method [setListener] in order to have callbacks on network changes
      */
     fun register() {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.LOLLIPOP) {
-            registerBroadcastReceiverUnderLolipop()
-        } else {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             registerBroadcastListenerOnLollipopAndAbove()
+        } else {
+            registerBroadcastReceiverUnderLolipop()
         }
     }
 
@@ -195,6 +215,7 @@ open class ConnectivityListener(private val context: Context) {
                 )
             }
 
+            //TODO remove ? or //NO-OP ?
             override fun onUnavailable() {
 //                onConnectivityInformationChangedListener?.onConnectivityInformationChanged(
 //                    getNetworkType(
@@ -236,16 +257,14 @@ open class ConnectivityListener(private val context: Context) {
         connectivityManager.unregisterNetworkCallback(networkCallback)
     }
 
-    private fun getNetworkType(
-        activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
-    ): ConnectivityInformation {
+    private fun getNetworkType(activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo): ConnectivityInformation {
         return if (activeNetworkInfo == null || !activeNetworkInfo.isConnected) {
-            ConnectivityInformation.Disconnected
+            DISCONNECTED
         } else {
             when (activeNetworkInfo.type) {
-                ConnectivityManager.TYPE_WIFI -> ConnectivityInformation.Wifi
-                ConnectivityManager.TYPE_MOBILE -> ConnectivityInformation.Mobile
-                else -> ConnectivityInformation.Other
+                ConnectivityManager.TYPE_WIFI -> WIFI
+                ConnectivityManager.TYPE_MOBILE -> MOBILE
+                else -> OTHER
             }
         }
 
@@ -260,18 +279,16 @@ open class ConnectivityListener(private val context: Context) {
 
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private fun getNetworkType(
-        activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo
-        , networkCapabilities: NetworkCapabilities?
+        activeNetworkInfo: NetworkInfo? = connectivityManager.activeNetworkInfo,
+        networkCapabilities: NetworkCapabilities?
     ): ConnectivityInformation {
-        val isConnected = networkCapabilities?.isConnected() ?: false
-
-        return if (isConnected.not()) {
-            ConnectivityInformation.Disconnected
+        return if ((networkCapabilities?.isConnected() == true).not()) {
+            DISCONNECTED
         } else {
             when (activeNetworkInfo?.type) {
-                ConnectivityManager.TYPE_WIFI -> ConnectivityInformation.Wifi
-                ConnectivityManager.TYPE_MOBILE -> ConnectivityInformation.Mobile
-                else -> ConnectivityInformation.Other
+                ConnectivityManager.TYPE_WIFI -> WIFI
+                ConnectivityManager.TYPE_MOBILE -> MOBILE
+                else -> OTHER
             }
         }
 

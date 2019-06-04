@@ -27,9 +27,11 @@ class LiveDataActivity : AppCompatActivity(), View.OnClickListener
     liveDataConnectivityListener.observe(this, Observer<ConnectivityInformation> { connectionModel ->
       currentConnectivityState.text = when (connectionModel)
       {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
-        ConnectivityInformation.Mobile -> "Mobile CONNECTED"
+        ConnectivityInformation.WIFI   -> "WIFI CONNECTED"
+        ConnectivityInformation.MOBILE -> "Mobile CONNECTED"
         else                           -> "NO internet"
+      }.run {
+        "$this : ${if (connectionModel?.isConnected?.not() != false) "not" else ""} connected}"
       }
     })
   }
@@ -40,8 +42,8 @@ class LiveDataActivity : AppCompatActivity(), View.OnClickListener
     {
       requestButton -> requestedStatus?.text = when (liveDataConnectivityListener.getConnectionInformation())
       {
-        ConnectivityInformation.Wifi   -> "WIFI CONNECTED"
-        ConnectivityInformation.Mobile -> "Mobile CONNECTED"
+        ConnectivityInformation.WIFI   -> "WIFI CONNECTED"
+        ConnectivityInformation.MOBILE -> "Mobile CONNECTED"
         else                           -> "NO internet"
       }
     }
