@@ -5,43 +5,43 @@ import android.content.Context
 import com.smartnsoft.connectivitylistener.library.ConnectivityInformation
 import com.smartnsoft.connectivitylistener.library.ConnectivityListener
 import com.smartnsoft.connectivitylistener.library.OnConnectivityInformationChangedListener
+import com.smartnsoft.connectivitylistener.library.RestrictBackgroundStatus
 
 
 /**
  * @author Thomas Ecalle
  * @since 2019.05.28
  */
-open class LiveDataConnectivityListener(context: Context) : LiveData<ConnectivityInformation>()
-{
+open class LiveDataConnectivityListener(context: Context) : LiveData<ConnectivityInformation>() {
 
-  private val connectivityListener = ConnectivityListener(context)
+    private val connectivityListener = ConnectivityListener(context)
 
-  /**
-   * Method used to request the current [ConnectivityInformation]
-   *
-   * @return[ConnectivityInformation] - the current [ConnectivityInformation]
-   */
-  fun getConnectionInformation(): ConnectivityInformation
-  {
-    return connectivityListener.getConnectionInformation()
-  }
+    val restrictBackgroundStatus: RestrictBackgroundStatus
+        get() {
+            return connectivityListener.restrictBackgroundStatus
+        }
 
-  override fun onActive()
-  {
-    super.onActive()
-    connectivityListener.register()
-    connectivityListener.setListener(object : OnConnectivityInformationChangedListener
-    {
-      override fun onConnectivityInformationChanged(connectivityInformation: ConnectivityInformation)
-      {
-        postValue(connectivityInformation)
-      }
-    })
-  }
+    /**
+     * Method used to request the current [ConnectivityInformation]
+     *
+     * @return[ConnectivityInformation] - the current [ConnectivityInformation]
+     */
+    fun getConnectionInformation(): ConnectivityInformation {
+        return connectivityListener.getConnectionInformation()
+    }
 
-  override fun onInactive()
-  {
-    connectivityListener.unregister()
-    super.onInactive()
-  }
+    override fun onActive() {
+        super.onActive()
+        connectivityListener.register()
+        connectivityListener.setListener(object : OnConnectivityInformationChangedListener {
+            override fun onConnectivityInformationChanged(connectivityInformation: ConnectivityInformation) {
+                postValue(connectivityInformation)
+            }
+        })
+    }
+
+    override fun onInactive() {
+        connectivityListener.unregister()
+        super.onInactive()
+    }
 }

@@ -90,12 +90,12 @@ open class ConnectivityListener(private val context: Context) {
         get() {
             // By default, the device is not running Android N or not on a metered network.
             // Use data as required to perform syncs, downloads, and updates.
-            return RESTRICT_BACKGROUND_STATUS_DISABLED.run {
+            return RESTRICT_BACKGROUND_STATUS_DISABLED.run restrictBackgroundRun@{
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                     this@ConnectivityListener.connectivityManager.apply {
                         // Checks if the device is on a metered network
                         if (this.isActiveNetworkMetered) {
-                            return@run this.restrictBackgroundStatus
+                            return@restrictBackgroundRun this.restrictBackgroundStatus
                         }
                     }
                 }

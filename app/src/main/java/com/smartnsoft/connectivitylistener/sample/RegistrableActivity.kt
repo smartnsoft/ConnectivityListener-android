@@ -53,12 +53,13 @@ class RegistrableActivity : AppCompatActivity(), View.OnClickListener,
             ConnectivityInformation.MOBILE -> "Mobile CONNECTED"
             else -> "NO internet"
         }.run {
-            "$this : ${if (connectivityInformation.isConnected.not()) "not" else ""} connected}"
+            "$this : ${if (connectivityInformation.isConnected.not()) "not" else ""} connected"
         }
 
         val dataSaverStatus =
-            "Background network calls are ${if (registrableConnectivityListener.restrictBackgroundStatus.isRestricted) "ALLOWED" else "DENIED"}"
+            "Background network calls are ${if (registrableConnectivityListener.restrictBackgroundStatus.isRestricted) "DENIED" else "ALLOWED"}"
 
-        textView?.text = "$connectionStatus\n$dataSaverStatus"
+        textView?.text =
+            "$connectionStatus\n$dataSaverStatus (${registrableConnectivityListener.restrictBackgroundStatus})"
     }
 }
