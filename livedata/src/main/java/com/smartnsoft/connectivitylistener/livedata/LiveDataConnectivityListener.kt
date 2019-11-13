@@ -1,4 +1,4 @@
-package com.smartnsoft.livedataconnectivitylistener
+package com.smartnsoft.connectivitylistener.livedata
 
 import android.arch.lifecycle.LiveData
 import android.content.Context

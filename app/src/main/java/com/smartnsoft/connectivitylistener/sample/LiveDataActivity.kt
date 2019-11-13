@@ -6,7 +6,7 @@ import android.support.v7.app.AppCompatActivity
 import android.view.View
 import android.widget.TextView
 import com.smartnsoft.connectivitylistener.library.ConnectivityInformation
-import com.smartnsoft.livedataconnectivitylistener.LiveDataConnectivityListener
+import com.smartnsoft.connectivitylistener.livedata.LiveDataConnectivityListener
 import kotlinx.android.synthetic.main.activity_main.*
 
 class LiveDataActivity : AppCompatActivity(), View.OnClickListener {

@@ -1,2 +1,2 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-          package="com.smartnsoft.livedataconnectivitylistener"/>
+          package="com.smartnsoft.connectivitylistener.livedata"/>

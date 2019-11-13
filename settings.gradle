@@ -1,1 +1,1 @@
-include ':library', ':livedataconnectivitylistener', ':app'
+include ':library', ':livedata', ':app'
