@@ -18,13 +18,28 @@ buildscript {
 allprojects {
   repositories {
     google()
+    maven {
+      url  "https://dl.bintray.com/smartnsoft/maven"
+    }
+    if (findProperty("nexusRepositoryUrl") != null)
+    {
+      maven
+      {
+        credentials
+        {
+          username nexusUsername
+          password nexusPassword
+        }
+        url nexusRepositoryUrl
+      }
+    }
     jcenter()
   }
   ext {
     compileSdkVersion = 28
     minSdkVersion = 16
     versionCode = 1
-    versionName = "1.0.0-004-SNAPSHOT"
+    versionName = "1.0.0"
 
     groupId = 'com.smartnsoft'
     artifactId = 'connectivitylistener'
@@ -33,8 +48,11 @@ allprojects {
 
     coreDescription = "ConnectivityListener is an Android library to listen for Network changes."
 
+    liveDataSuffix = "-livedata"
+    liveDataArtifactId = artifactId + liveDataSuffix
+    liveDataLibraryName = libraryName + liveDataSuffix
     liveDataDescription = "An implementation using LiveData of the ConnectivityListener library."
-    liveDataVersionName = "1.0.0-004-SNAPSHOT"
+    liveDataVersionName = "1.0.0"
 
     documentationReference = [
       "http://docs.oracle.com/javase/7/docs/api/",

@@ -1,17 +1,12 @@
 apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android-extensions'
 apply plugin: 'kotlin-android'
+apply plugin: 'kotlin-android-extensions'
 apply plugin: "com.jfrog.bintray"
 apply plugin: "maven"
 apply plugin: "maven-publish"
 
-def moduleSuffix = "-livedata"
-def moduleArtifactId = project.artifactId + moduleSuffix
-def moduleLibraryName = project.libraryName + moduleSuffix
-
 android {
   compileSdkVersion rootProject.compileSdkVersion
-
 
   defaultConfig {
     minSdkVersion rootProject.minSdkVersion
@@ -30,7 +25,7 @@ android {
   compileOptions {
     sourceCompatibility JavaVersion.VERSION_1_8
     targetCompatibility JavaVersion.VERSION_1_8
-    kotlinOptions.freeCompilerArgs += ['-module-name', "$groupId.$moduleArtifactId"]
+    kotlinOptions.freeCompilerArgs += ['-module-name', "$groupId.$liveDataArtifactId"]
   }
 
 }
@@ -38,8 +33,8 @@ android {
 dependencies {
   implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}")
   implementation("com.android.support:appcompat-v7:28.0.0")
-  api project(":library")
-  //implementation("$groupId.$artifactId:1.0.0")
+    //  api project(":library")
+  implementation("$groupId:$artifactId:$versionName")
 }
 task sourcesJar(type: Jar) {
   archiveClassifier.set("sources")
@@ -49,8 +44,8 @@ task sourcesJar(type: Jar) {
 task javadoc(type: Javadoc) {
   enabled = false
 
-  title = moduleLibraryName + " API"
-  description "Javadoc for the " + moduleLibraryName
+  title = project.liveDataLibraryName + " API"
+  description "Javadoc for the " + project.liveDataLibraryName
   source = android.sourceSets.main.java.srcDirs
 
   options.charSet = "UTF-8"
@@ -94,14 +89,14 @@ publishing
       artifact sourcesJar
       artifact javadocJar
       groupId project.groupId
-      artifactId moduleArtifactId
+      artifactId project.liveDataArtifactId
       version android.defaultConfig.versionName
 
       pom.withXml
       {
         def root = asNode()
         root.appendNode("description", project.liveDataDescription)
-        root.appendNode("name", moduleLibraryName)
+        root.appendNode("name", project.liveDataLibraryName)
         root.appendNode("url", "https://github.com/smartnsoft/" + project.repositoryName)
         root.children().last() + pomConfig
       }
@@ -117,7 +112,7 @@ publishing.publications.all
     asNode().dependencies."*".findAll()
     {
       it.scope.text() == "runtime" && project.configurations.compile.allDependencies.find { dep ->
-        dep.name == moduleArtifactId.text()
+        dep.name == it.artifactId.text()
       }
     }.each
     {
@@ -133,7 +128,7 @@ bintray
   pkg
   {
     repo = "maven"
-    name = moduleLibraryName
+    name = project.liveDataLibraryName
     userOrg = "smartnsoft"
     licenses = ["MIT"]
     vcsUrl = "https://github.com/smartnsoft/" + project.repositoryName + ".git"
@@ -154,7 +149,7 @@ uploadArchives
   {
     mavenDeployer
     {
-      repository(url: "https://api.bintray.com/maven/smartnsoft/maven/" + moduleLibraryName + "/;publish=1")
+      repository(url: "https://api.bintray.com/maven/smartnsoft/maven/" + project.liveDataLibraryName + "/;publish=1")
       {
         authentication(userName: findProperty("bintrayUsername") ?: "", password: findProperty("bintrayKey") ?: "")
       }
@@ -166,9 +161,9 @@ uploadArchives
 
       pom.project
       {
-        name moduleLibraryName
+        name project.liveDataLibraryName
         groupId project.groupId
-        artifactId moduleArtifactId
+        artifactId project.liveDataArtifactId
         version android.defaultConfig.versionName
         packaging "aar"
       }
