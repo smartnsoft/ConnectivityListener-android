@@ -5,15 +5,19 @@ apply plugin: "com.jfrog.bintray"
 apply plugin: "maven"
 apply plugin: "maven-publish"
 
+def moduleSuffix = "-livedata"
+def moduleArtifactId = project.artifactId + moduleSuffix
+def moduleLibraryName = project.libraryName + moduleSuffix
+
 android {
-  compileSdkVersion 28
+  compileSdkVersion rootProject.compileSdkVersion
 
 
   defaultConfig {
-    minSdkVersion 16
-    targetSdkVersion 28
-    versionCode 1
-    versionName "1.0.0-002-SNAPSHOT"
+    minSdkVersion rootProject.minSdkVersion
+    targetSdkVersion rootProject.compileSdkVersion
+    versionCode rootProject.versionCode
+    versionName rootProject.liveDataVersionName
   }
 
   buildTypes {
@@ -23,34 +27,42 @@ android {
     }
   }
 
-}
-dependencies {
-  implementation fileTree(dir: 'libs', include: ['*.jar'])
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-  implementation 'com.android.support:appcompat-v7:28.0.0'
-  api project(':library')
-  //implementation 'com.smartnsoft:connectivitylistener:1.0.0-001-SNAPSHOT'
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+    kotlinOptions.freeCompilerArgs += ['-module-name', "$groupId.$moduleArtifactId"]
+  }
+
 }
 
+dependencies {
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}")
+  implementation("com.android.support:appcompat-v7:28.0.0")
+  api project(":library")
+  //implementation("$groupId.$artifactId:1.0.0")
+}
 task sourcesJar(type: Jar) {
-  classifier = "sources"
+  archiveClassifier.set("sources")
   from android.sourceSets.main.java.srcDirs
 }
 
 task javadoc(type: Javadoc) {
-  title = "LiveData implementation of the Connectivity Listener API"
-  description "Javadoc for the LiveData implementation of the ConnectivityListener library"
+  enabled = false
+
+  title = moduleLibraryName + " API"
+  description "Javadoc for the " + moduleLibraryName
   source = android.sourceSets.main.java.srcDirs
 
   options.charSet = "UTF-8"
   options.overview = "src/main/javadoc/overview.html"
+  options.links = project.documentationReference
 
   classpath += project.files(project.android.getBootClasspath().join(File.pathSeparator))
   failOnError = false
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-  classifier = "javadoc"
+  archiveClassifier.set("javadoc")
   from javadoc.destinationDir
   // options.encoding = 'UTF-8'
 }
@@ -81,16 +93,16 @@ publishing
     {
       artifact sourcesJar
       artifact javadocJar
-      groupId "com.smartnsoft"
-      artifactId "livedataconnectivitylistener"
+      groupId project.groupId
+      artifactId moduleArtifactId
       version android.defaultConfig.versionName
 
       pom.withXml
       {
         def root = asNode()
-        root.appendNode("description", "An implementation using LiveData of the ConnectivityListener library.")
-        root.appendNode("name", "livedataconnectivitylistener")
-        root.appendNode("url", "https://github.com/smartnsoft/livedata-connectivity-listener")
+        root.appendNode("description", project.liveDataDescription)
+        root.appendNode("name", moduleLibraryName)
+        root.appendNode("url", "https://github.com/smartnsoft/" + project.repositoryName)
         root.children().last() + pomConfig
       }
     }
@@ -105,7 +117,7 @@ publishing.publications.all
     asNode().dependencies."*".findAll()
     {
       it.scope.text() == "runtime" && project.configurations.compile.allDependencies.find { dep ->
-        dep.name == it.artifactId.text()
+        dep.name == moduleArtifactId.text()
       }
     }.each
     {
@@ -121,17 +133,16 @@ bintray
   pkg
   {
     repo = "maven"
-    name = "livedataconnectivitylistener"
+    name = moduleLibraryName
     userOrg = "smartnsoft"
     licenses = ["MIT"]
-    vcsUrl = ""
+    vcsUrl = "https://github.com/smartnsoft/" + project.repositoryName + ".git"
     publish = true
 
     version
     {
       name = android.defaultConfig.versionName
-      desc = "An implementation using LiveData of the ConnectivityListener library."
-      released = new Date()
+      desc = project.liveDataDescription
       vcsTag = "v" + android.defaultConfig.versionName
     }
   }
@@ -143,21 +154,21 @@ uploadArchives
   {
     mavenDeployer
     {
-      repository(url: "https://api.bintray.com/maven/smartnsoft/maven/livedataconnectivitylistener/;publish=1")
+      repository(url: "https://api.bintray.com/maven/smartnsoft/maven/" + moduleLibraryName + "/;publish=1")
       {
         authentication(userName: findProperty("bintrayUsername") ?: "", password: findProperty("bintrayKey") ?: "")
       }
 
-      snapshotRepository(url: nexusSnapshotUrl)
+      snapshotRepository(url: findProperty("nexusSnapshotUrl") ?: "")
       {
         authentication(userName: findProperty("nexusUsername") ?: "", password: findProperty("nexusPassword") ?: "")
       }
 
       pom.project
       {
-        name "livedataconnectivitylistener"
-        groupId "com.smartnsoft"
-        artifactId "livedataconnectivitylistener"
+        name moduleLibraryName
+        groupId project.groupId
+        artifactId moduleArtifactId
         version android.defaultConfig.versionName
         packaging "aar"
       }

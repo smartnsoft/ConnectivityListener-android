@@ -7,14 +7,14 @@ apply plugin: "maven"
 apply plugin: "maven-publish"
 
 android {
-  compileSdkVersion 28
+  compileSdkVersion rootProject.compileSdkVersion
 
 
   defaultConfig {
-    minSdkVersion 16
-    targetSdkVersion 28
-    versionCode 1
-    versionName "1.0.0-003-SNAPSHOT"
+    minSdkVersion rootProject.minSdkVersion
+    targetSdkVersion rootProject.compileSdkVersion
+    versionCode rootProject.versionCode
+    versionName rootProject.versionName
   }
 
   buildTypes {
@@ -24,37 +24,41 @@ android {
     }
   }
 
+  compileOptions {
+    sourceCompatibility JavaVersion.VERSION_1_8
+    targetCompatibility JavaVersion.VERSION_1_8
+    kotlinOptions.freeCompilerArgs += ['-module-name', "$groupId.$artifactId"]
+  }
+
 }
 
 dependencies {
-  implementation fileTree(dir: 'libs', include: ['*.jar'])
-  implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
-  implementation 'com.android.support:appcompat-v7:28.0.0'
-}
-repositories {
-  mavenCentral()
+  implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}")
+  implementation("com.android.support:appcompat-v7:28.0.0")
 }
 
 task sourcesJar(type: Jar) {
-  classifier = "sources"
+  archiveClassifier.set("sources")
   from android.sourceSets.main.java.srcDirs
 }
 
 task javadoc(type: Javadoc) {
-  title = "Connectivity Listener API"
-  description "Javadoc for the ConnectivityListener library"
+  enabled = false
+
+  title = project.libraryName + " API"
+  description "Javadoc for the " + project.libraryName
   source = android.sourceSets.main.java.srcDirs
 
   options.charSet = "UTF-8"
   options.overview = "src/main/javadoc/overview.html"
-  options.links = ["http://docs.oracle.com/javase/7/docs/api/", "http://d.android.com/reference/"]
+  options.links = project.documentationReference
 
   classpath += project.files(project.android.getBootClasspath().join(File.pathSeparator))
   failOnError = false
 }
 
 task javadocJar(type: Jar, dependsOn: javadoc) {
-  classifier = "javadoc"
+  archiveClassifier.set("javadoc")
   from javadoc.destinationDir
   // options.encoding = 'UTF-8'
 }
@@ -85,16 +89,16 @@ publishing
     {
       artifact sourcesJar
       artifact javadocJar
-      groupId "com.smartnsoft"
-      artifactId "connectivitylistener"
+      groupId project.groupId
+      artifactId project.artifactId
       version android.defaultConfig.versionName
 
       pom.withXml
       {
         def root = asNode()
-        root.appendNode("description", "ConnectivityListener is an Android library to listen for Network changes.")
-        root.appendNode("name", "connectivitylistener")
-        root.appendNode("url", "https://github.com/smartnsoft/connectivity-listener")
+        root.appendNode("description", project.coreDescription)
+        root.appendNode("name", project.libraryName)
+        root.appendNode("url", "https://github.com/smartnsoft/" + project.repositoryName)
         root.children().last() + pomConfig
       }
     }
@@ -125,17 +129,16 @@ bintray
   pkg
   {
     repo = "maven"
-    name = "connectivitylistener"
+    name = project.libraryName
     userOrg = "smartnsoft"
     licenses = ["MIT"]
-    vcsUrl = ""
+    vcsUrl = "https://github.com/smartnsoft/" + project.repositoryName + ".git"
     publish = true
 
     version
     {
       name = android.defaultConfig.versionName
-      desc = "ConnectivityListener is an Android library to listen for Network changes."
-      released = new Date()
+      desc = project.coreDescription
       vcsTag = "v" + android.defaultConfig.versionName
     }
   }
@@ -147,21 +150,21 @@ uploadArchives
   {
     mavenDeployer
     {
-      repository(url: "https://api.bintray.com/maven/smartnsoft/maven/connectivitylistener/;publish=1")
+      repository(url: "https://api.bintray.com/maven/smartnsoft/maven/" + project.libraryName + "/;publish=1")
       {
         authentication(userName: findProperty("bintrayUsername") ?: "", password: findProperty("bintrayKey") ?: "")
       }
 
-      snapshotRepository(url: nexusSnapshotUrl)
+      snapshotRepository(url: findProperty("nexusSnapshotUrl") ?: "")
       {
         authentication(userName: findProperty("nexusUsername") ?: "", password: findProperty("nexusPassword") ?: "")
       }
 
       pom.project
       {
-        name "connectivitylistener"
-        groupId "com.smartnsoft"
-        artifactId "connectivitylistener"
+        name project.libraryName
+        groupId project.groupId
+        artifactId project.artifactId
         version android.defaultConfig.versionName
         packaging "aar"
       }
